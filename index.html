@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Glücksrad</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: system-ui, sans-serif;
+    background: #fff;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 24px 16px 48px;
+    color: #1a1a2e;
+  }
+
+  h1 {
+    font-size: clamp(1.6rem, 5vw, 2.4rem);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    margin-bottom: 8px;
+    background: linear-gradient(135deg, #6c3de5, #e5523d);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .wheel-container {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 12px;
+  }
+
+  .pointer-wrap {
+    position: relative;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    z-index: 10;
+    pointer-events: none;
+    margin-bottom: -2px;
+  }
+
+  .pointer-wrap svg {
+    display: block;
+  }
+
+  canvas {
+    display: block;
+    border-radius: 50%;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.18);
+  }
+
+  #spin-btn {
+    margin-top: 24px;
+    padding: 14px 48px;
+    font-size: 1.2rem;
+    font-weight: 700;
+    font-family: inherit;
+    color: #fff;
+    background: linear-gradient(135deg, #6c3de5, #a13de5);
+    border: none;
+    border-radius: 999px;
+    cursor: pointer;
+    box-shadow: 0 4px 16px rgba(108,61,229,0.35);
+    transition: transform 0.12s, box-shadow 0.12s, opacity 0.2s;
+    letter-spacing: 0.03em;
+  }
+
+  #spin-btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(108,61,229,0.45);
+  }
+
+  #spin-btn:active:not(:disabled) {
+    transform: translateY(0);
+  }
+
+  #spin-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  #result-box {
+    margin-top: 24px;
+    padding: 18px 36px;
+    background: linear-gradient(135deg, #f9f5ff, #fff5f3);
+    border: 2px solid #e0d4fc;
+    border-radius: 16px;
+    font-size: clamp(1.2rem, 4vw, 1.7rem);
+    font-weight: 800;
+    text-align: center;
+    min-width: 260px;
+    opacity: 0;
+    transform: scale(0.85) translateY(10px);
+    transition: opacity 0.4s ease, transform 0.4s ease;
+    will-change: transform, opacity;
+  }
+
+  #result-box.visible {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+
+  /* SEGMENT EDITOR */
+  .editor-section {
+    margin-top: 36px;
+    width: 100%;
+    max-width: 600px;
+  }
+
+  .editor-section h2 {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #555;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+
+  .segments-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+    gap: 10px;
+  }
+
+  .seg-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #fafafa;
+    border: 1.5px solid #e8e8e8;
+    border-radius: 10px;
+    padding: 8px 10px;
+    transition: border-color 0.15s;
+  }
+
+  .seg-row:focus-within {
+    border-color: #a07af5;
+  }
+
+  .seg-swatch {
+    width: 16px;
+    height: 16px;
+    border-radius: 4px;
+    flex-shrink: 0;
+  }
+
+  .seg-row input {
+    flex: 1;
+    border: none;
+    background: transparent;
+    font-family: inherit;
+    font-size: 0.88rem;
+    color: #1a1a2e;
+    outline: none;
+    min-width: 0;
+  }
+
+  /* CONFETTI */
+  .confetti-piece {
+    position: fixed;
+    width: 10px;
+    height: 10px;
+    top: -10px;
+    border-radius: 2px;
+    pointer-events: none;
+    z-index: 9999;
+    animation: confettiFall linear forwards;
+  }
+
+  @keyframes confettiFall {
+    0%   { transform: translateY(0) rotate(0deg); opacity: 1; }
+    90%  { opacity: 1; }
+    100% { transform: translateY(110vh) rotate(720deg); opacity: 0; }
+  }
+
+  @media (max-width: 600px) {
+    body { padding: 16px 12px 36px; }
+  }
+</style>
+</head>
+<body>
+
+<h1>🎡 Glücksrad</h1>
+
+<div class="wheel-container">
+  <div class="pointer-wrap" id="pointer-wrap">
+    <!-- pointer SVG injected by JS -->
+  </div>
+  <canvas id="wheel"></canvas>
+</div>
+
+<button id="spin-btn">Drehen</button>
+
+<div id="result-box"></div>
+
+<section class="editor-section">
+  <h2>Felder bearbeiten</h2>
+  <div class="segments-list" id="segments-list"></div>
+</section>
+
+<script>
+(() => {
+  // ─── CONFIG ───────────────────────────────────────────────────────────────
+  const NUM_SEGMENTS = 15;
+  const PALETTE = [
+    '#e63946','#f4a261','#2a9d8f','#457b9d','#e9c46a',
+    '#6a4c93','#06d6a0','#ef476f','#118ab2','#ffd166',
+    '#7b2d8b','#52b788','#f77f00','#4361ee','#b5179e'
+  ];
+
+  const defaultLabels = Array.from({length: NUM_SEGMENTS}, (_, i) => `Feld ${i + 1}`);
+  let labels = [...defaultLabels];
+
+  // ─── CANVAS SETUP ─────────────────────────────────────────────────────────
+  const canvas = document.getElementById('wheel');
+  const ctx    = canvas.getContext('2d');
+  let size     = 500;
+
+  function computeSize() {
+    const maxW = Math.min(window.innerWidth - 32, 600);
+    size = Math.max(280, Math.min(500, maxW));
+    canvas.width  = size;
+    canvas.height = size;
+  }
+
+  // ─── POINTER ──────────────────────────────────────────────────────────────
+  function buildPointer() {
+    const wrap = document.getElementById('pointer-wrap');
+    const ph   = Math.round(size * 0.08);
+    const pw   = Math.round(size * 0.07);
+    wrap.innerHTML = `<svg width="${pw}" height="${ph}" viewBox="0 0 ${pw} ${ph}" xmlns="http://www.w3.org/2000/svg">
+      <polygon points="${pw/2},${ph} 0,0 ${pw},0"
+        fill="#ff2d55" stroke="#fff" stroke-width="2" stroke-linejoin="round"/>
+    </svg>`;
+  }
+
+  // ─── DRAW WHEEL ───────────────────────────────────────────────────────────
+  let currentAngle    = 0;   // radians, current rotation of the wheel
+  let highlightIndex  = -1;  // winning segment index
+
+  function drawWheel() {
+    const cx = size / 2, cy = size / 2, r = size / 2 - 4;
+    const sliceAngle = (2 * Math.PI) / NUM_SEGMENTS;
+    const fontSize   = Math.max(10, Math.round(size * 0.036));
+
+    ctx.clearRect(0, 0, size, size);
+
+    for (let i = 0; i < NUM_SEGMENTS; i++) {
+      const startA = currentAngle + i * sliceAngle;
+      const endA   = startA + sliceAngle;
+      const midA   = startA + sliceAngle / 2;
+
+      // fill
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.arc(cx, cy, r, startA, endA);
+      ctx.closePath();
+      ctx.fillStyle = PALETTE[i % PALETTE.length];
+      ctx.fill();
+
+      // highlight winner
+      if (i === highlightIndex) {
+        ctx.strokeStyle = 'rgba(255,255,255,0.95)';
+        ctx.lineWidth   = Math.max(3, size * 0.012);
+        ctx.stroke();
+
+        // glow
+        ctx.save();
+        ctx.shadowColor = '#fff';
+        ctx.shadowBlur  = 18;
+        ctx.stroke();
+        ctx.restore();
+      }
+
+      // separator
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.arc(cx, cy, r, startA, endA);
+      ctx.closePath();
+      ctx.strokeStyle = 'rgba(0,0,0,0.15)';
+      ctx.lineWidth   = 1;
+      ctx.stroke();
+
+      // text
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.rotate(midA);
+      ctx.textAlign    = 'right';
+      ctx.textBaseline = 'middle';
+      ctx.fillStyle    = '#fff';
+      ctx.font         = `bold ${fontSize}px system-ui, sans-serif`;
+      ctx.shadowColor  = 'rgba(0,0,0,0.5)';
+      ctx.shadowBlur   = 4;
+      const maxTextR   = r - 14;
+      const label      = labels[i];
+      // truncate if too long
+      let txt = label;
+      ctx.font = `bold ${fontSize}px system-ui, sans-serif`;
+      while (ctx.measureText(txt).width > maxTextR * 0.72 && txt.length > 1) {
+        txt = txt.slice(0, -1);
+      }
+      if (txt !== label) txt = txt.slice(0, -1) + '…';
+      ctx.fillText(txt, r - 12, 0);
+      ctx.restore();
+    }
+
+    // center hub
+    ctx.beginPath();
+    ctx.arc(cx, cy, size * 0.045, 0, 2 * Math.PI);
+    ctx.fillStyle = '#fff';
+    ctx.shadowColor = 'rgba(0,0,0,0.25)';
+    ctx.shadowBlur  = 8;
+    ctx.fill();
+    ctx.shadowBlur  = 0;
+    ctx.strokeStyle = '#ddd';
+    ctx.lineWidth   = 2;
+    ctx.stroke();
+  }
+
+  // ─── WINNING SEGMENT DETECTION ────────────────────────────────────────────
+  // pointer points at the top (angle = -π/2 in canvas coords = 270°)
+  function getWinnerIndex() {
+    const sliceAngle  = (2 * Math.PI) / NUM_SEGMENTS;
+    // normalise currentAngle into [0, 2π)
+    const norm = ((currentAngle % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
+    // the pointer is at the top → canvas angle -π/2 (= 3π/2)
+    // which segment sits under the top pointer?
+    const pointerAngle = 3 * Math.PI / 2; // top of canvas
+    // offset from wheel rotation
+    let offset = ((pointerAngle - norm) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI);
+    return Math.floor(offset / sliceAngle) % NUM_SEGMENTS;
+  }
+
+  // ─── SPIN ANIMATION ───────────────────────────────────────────────────────
+  let spinning = false;
+  const spinBtn = document.getElementById('spin-btn');
+
+  spinBtn.addEventListener('click', startSpin);
+
+  function startSpin() {
+    if (spinning) return;
+    spinning = true;
+    highlightIndex = -1;
+    document.getElementById('result-box').classList.remove('visible');
+    spinBtn.disabled = true;
+
+    const duration    = (4 + Math.random() * 3) * 1000;  // 4–7s
+    const extraSpins  = 5 + Math.floor(Math.random() * 5); // 5–9 full rotations
+    const randomExtra = Math.random() * 2 * Math.PI;
+    const totalDelta  = extraSpins * 2 * Math.PI + randomExtra;
+
+    const startAngle = currentAngle;
+    const startTime  = performance.now();
+
+    function easeOut(t) {
+      // cubic ease-out
+      return 1 - Math.pow(1 - t, 3);
+    }
+
+    function frame(now) {
+      const elapsed = now - startTime;
+      const t       = Math.min(elapsed / duration, 1);
+      currentAngle  = startAngle + totalDelta * easeOut(t);
+      drawWheel();
+
+      if (t < 1) {
+        requestAnimationFrame(frame);
+      } else {
+        currentAngle = startAngle + totalDelta;
+        spinning     = false;
+        spinBtn.disabled = false;
+        highlightIndex   = getWinnerIndex();
+        drawWheel();
+        showResult(highlightIndex);
+      }
+    }
+
+    requestAnimationFrame(frame);
+  }
+
+  // ─── RESULT ───────────────────────────────────────────────────────────────
+  function showResult(idx) {
+    const box   = document.getElementById('result-box');
+    box.textContent = `🎉 ${labels[idx]}`;
+    box.classList.add('visible');
+    launchConfetti();
+  }
+
+  // ─── CONFETTI ─────────────────────────────────────────────────────────────
+  const CONFETTI_COLORS = [
+    '#e63946','#f4a261','#2a9d8f','#e9c46a','#6a4c93',
+    '#06d6a0','#ef476f','#118ab2','#ffd166','#b5179e'
+  ];
+
+  function launchConfetti() {
+    const count = 120;
+    for (let i = 0; i < count; i++) {
+      const el = document.createElement('div');
+      el.className = 'confetti-piece';
+      const size   = 6 + Math.random() * 8;
+      const left   = Math.random() * 100;
+      const delay  = Math.random() * 0.8;
+      const dur    = 1.8 + Math.random() * 1.6;
+      const color  = CONFETTI_COLORS[Math.floor(Math.random() * CONFETTI_COLORS.length)];
+      const shape  = Math.random() > 0.5 ? '50%' : '2px';
+
+      el.style.cssText = `
+        width:${size}px; height:${size}px;
+        left:${left}vw;
+        background:${color};
+        border-radius:${shape};
+        animation-duration:${dur}s;
+        animation-delay:${delay}s;
+      `;
+      document.body.appendChild(el);
+      el.addEventListener('animationend', () => el.remove());
+    }
+  }
+
+  // ─── SEGMENT EDITOR ───────────────────────────────────────────────────────
+  function buildEditor() {
+    const list = document.getElementById('segments-list');
+    list.innerHTML = '';
+    labels.forEach((lbl, i) => {
+      const row   = document.createElement('div');
+      row.className = 'seg-row';
+
+      const swatch = document.createElement('div');
+      swatch.className  = 'seg-swatch';
+      swatch.style.background = PALETTE[i % PALETTE.length];
+
+      const inp = document.createElement('input');
+      inp.type        = 'text';
+      inp.value       = lbl;
+      inp.maxLength   = 28;
+      inp.setAttribute('aria-label', `Segment ${i + 1}`);
+      inp.addEventListener('input', () => {
+        labels[i] = inp.value || defaultLabels[i];
+        drawWheel();
+      });
+
+      row.appendChild(swatch);
+      row.appendChild(inp);
+      list.appendChild(row);
+    });
+  }
+
+  // ─── RESPONSIVE RESIZE ────────────────────────────────────────────────────
+  let resizeTimer;
+  window.addEventListener('resize', () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => {
+      computeSize();
+      buildPointer();
+      drawWheel();
+    }, 80);
+  });
+
+  // ─── INIT ─────────────────────────────────────────────────────────────────
+  computeSize();
+  buildPointer();
+  drawWheel();
+  buildEditor();
+
+})();
+</script>
+</body>
+</html>
