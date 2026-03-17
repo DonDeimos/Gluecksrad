@@ -97,8 +97,17 @@
     transform: scale(1) translateY(0);
   }
 
-  #spin-btn {
+  /* Buttons row */
+  .controls-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
     margin: 28px 0 8px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  #spin-btn {
     padding: 14px 52px;
     font-size: 1.2rem;
     font-weight: 700;
@@ -125,18 +134,106 @@
     cursor: not-allowed;
   }
 
+  /* Konfetti-Toggle */
+  #confetti-btn {
+    padding: 10px 20px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    font-family: inherit;
+    border: 2px solid #e0d4fc;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: all 0.18s;
+    background: #f9f5ff;
+    color: #6c3de5;
+    white-space: nowrap;
+  }
+
+  #confetti-btn.on {
+    background: linear-gradient(135deg, #f9f5ff, #fce4ff);
+    border-color: #c47af5;
+    color: #6c3de5;
+  }
+
+  #confetti-btn.off {
+    background: #f5f5f5;
+    border-color: #ddd;
+    color: #999;
+  }
+
+  #confetti-btn:hover {
+    transform: translateY(-1px);
+  }
+
+  /* Editor section */
   .editor-section {
     margin-top: 22px;
     width: 100%;
   }
 
-  .editor-section h2 {
+  .editor-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+  }
+
+  .editor-header h2 {
     font-size: 0.88rem;
     font-weight: 700;
     color: #777;
     letter-spacing: 0.06em;
     text-transform: uppercase;
-    margin-bottom: 10px;
+  }
+
+  /* Feldanzahl-Stepper */
+  .count-stepper {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .count-stepper span {
+    font-size: 0.82rem;
+    color: #888;
+    font-weight: 600;
+  }
+
+  .count-display {
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: #1a1a2e;
+    min-width: 24px;
+    text-align: center;
+  }
+
+  .count-btn {
+    width: 26px;
+    height: 26px;
+    border: 1.5px solid #d0c4f7;
+    border-radius: 8px;
+    background: #f4f0ff;
+    color: #6c3de5;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.12s, transform 0.1s;
+    line-height: 1;
+    padding: 0;
+    font-family: inherit;
+  }
+
+  .count-btn:hover:not(:disabled) {
+    background: #e8deff;
+    transform: scale(1.1);
+  }
+
+  .count-btn:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
   }
 
   .segments-list {
@@ -211,7 +308,15 @@
     </div>
     <div class="result-box" id="result-box-1"></div>
     <section class="editor-section">
-      <h2>Felder bearbeiten</h2>
+      <div class="editor-header">
+        <h2>Felder bearbeiten</h2>
+        <div class="count-stepper">
+          <span>Felder:</span>
+          <button class="count-btn" id="dec-1">−</button>
+          <div class="count-display" id="count-display-1">15</div>
+          <button class="count-btn" id="inc-1">+</button>
+        </div>
+      </div>
       <div class="segments-list" id="segments-list-1"></div>
     </section>
   </div>
@@ -224,17 +329,29 @@
     </div>
     <div class="result-box" id="result-box-2"></div>
     <section class="editor-section">
-      <h2>Felder bearbeiten</h2>
+      <div class="editor-header">
+        <h2>Felder bearbeiten</h2>
+        <div class="count-stepper">
+          <span>Felder:</span>
+          <button class="count-btn" id="dec-2">−</button>
+          <div class="count-display" id="count-display-2">15</div>
+          <button class="count-btn" id="inc-2">+</button>
+        </div>
+      </div>
       <div class="segments-list" id="segments-list-2"></div>
     </section>
   </div>
 </div>
 
-<button id="spin-btn">Drehen</button>
+<div class="controls-row">
+  <button id="spin-btn">Drehen</button>
+  <button id="confetti-btn" class="on">🎊 Konfetti: AN</button>
+</div>
 
 <script>
 (() => {
-  const NUM_SEGMENTS = 15;
+  const MIN_SEG = 2;
+  const MAX_SEG = 20;
 
   const PALETTE = [
     '#e63946','#f4a261','#2a9d8f','#457b9d','#e9c46a',
@@ -247,38 +364,57 @@
     '#06d6a0','#ef476f','#118ab2','#ffd166','#b5179e'
   ];
 
-  // ─── Easing functions ────────────────────────────────────────────────────
-  // Rad 1: sanftes kubisches Abbremsen — gleichmäßig und weich
+  // ─── Konfetti-Toggle ──────────────────────────────────────────────────────
+  let confettiOn = true;
+  const confettiBtn = document.getElementById('confetti-btn');
+  confettiBtn.addEventListener('click', () => {
+    confettiOn = !confettiOn;
+    confettiBtn.textContent = confettiOn ? '🎊 Konfetti: AN' : '🎊 Konfetti: AUS';
+    confettiBtn.className   = confettiOn ? 'on' : 'off';
+  });
+
+  // ─── Easing functions ─────────────────────────────────────────────────────
+  // Rad 1: sanftes kubisches Abbremsen
   function easingCubic(t) {
     return 1 - Math.pow(1 - t, 3);
   }
 
-  // Rad 2: dreht erst schnell, bremst dann scharf — anderes Gefühl
+  // Rad 2: exponentielles Decay — dreht schnell, bremst dann scharf
   function easingExpoDecay(t) {
-    // Exponentielles Abbremsen: dreht lange schnell, stoppt dann abrupt
     return 1 - Math.pow(2, -10 * t);
   }
 
-  // ─── Wheel factory ───────────────────────────────────────────────────────
-  function createWheel(canvasId, pointerWrapId, segListId, resultBoxId, easingFn, spinRanges) {
-    const canvas     = document.getElementById(canvasId);
-    const ctx        = canvas.getContext('2d');
-    const ptrWrap    = document.getElementById(pointerWrapId);
-    const segListEl  = document.getElementById(segListId);
-    const resultBox  = document.getElementById(resultBoxId);
+  // ─── Wheel factory ────────────────────────────────────────────────────────
+  function createWheel(canvasId, pointerWrapId, segListId, resultBoxId,
+                       countDisplayId, decBtnId, incBtnId,
+                       easingFn, spinRanges, initialCount) {
 
-    const defaultLabels = Array.from({length: NUM_SEGMENTS}, (_, i) => `Feld ${i + 1}`);
-    let labels         = [...defaultLabels];
+    const canvas      = document.getElementById(canvasId);
+    const ctx         = canvas.getContext('2d');
+    const ptrWrap     = document.getElementById(pointerWrapId);
+    const segListEl   = document.getElementById(segListId);
+    const resultBox   = document.getElementById(resultBoxId);
+    const countDisp   = document.getElementById(countDisplayId);
+    const decBtn      = document.getElementById(decBtnId);
+    const incBtn      = document.getElementById(incBtnId);
+
+    let numSegments    = initialCount;
+    // savedLabels stores all entered text, growing as needed
+    let savedLabels    = Array.from({length: MAX_SEG}, (_, i) => `Feld ${i + 1}`);
     let size           = 400;
     let currentAngle   = 0;
     let highlightIndex = -1;
     let spinning       = false;
 
+    function activeLabels() {
+      return savedLabels.slice(0, numSegments);
+    }
+
     function computeSize() {
       const vw = window.innerWidth;
       const available = vw < 720
-        ? Math.min(vw - 28, 500)                 // mobil: volle Breite
-        : Math.min((vw - 100) / 2, 460);         // desktop: halbe Breite
+        ? Math.min(vw - 28, 500)
+        : Math.min((vw - 100) / 2, 460);
       size = Math.max(240, available);
       canvas.width  = size;
       canvas.height = size;
@@ -295,18 +431,19 @@
     }
 
     function drawWheel() {
+      const lbls = activeLabels();
+      const n    = numSegments;
       const cx = size / 2, cy = size / 2, r = size / 2 - 4;
-      const sliceAngle = (2 * Math.PI) / NUM_SEGMENTS;
-      const fontSize   = Math.max(9, Math.round(size * 0.034));
+      const sliceAngle = (2 * Math.PI) / n;
+      const fontSize   = Math.max(8, Math.round(size * 0.034));
 
       ctx.clearRect(0, 0, size, size);
 
-      for (let i = 0; i < NUM_SEGMENTS; i++) {
+      for (let i = 0; i < n; i++) {
         const startA = currentAngle + i * sliceAngle;
         const endA   = startA + sliceAngle;
         const midA   = startA + sliceAngle / 2;
 
-        // Segmentfläche
         ctx.beginPath();
         ctx.moveTo(cx, cy);
         ctx.arc(cx, cy, r, startA, endA);
@@ -314,7 +451,6 @@
         ctx.fillStyle = PALETTE[i % PALETTE.length];
         ctx.fill();
 
-        // Gewinner hervorheben
         if (i === highlightIndex) {
           ctx.strokeStyle = 'rgba(255,255,255,0.95)';
           ctx.lineWidth   = Math.max(3, size * 0.012);
@@ -326,7 +462,6 @@
           ctx.restore();
         }
 
-        // Trennlinie
         ctx.beginPath();
         ctx.moveTo(cx, cy);
         ctx.arc(cx, cy, r, startA, endA);
@@ -335,7 +470,6 @@
         ctx.lineWidth   = 1;
         ctx.stroke();
 
-        // Text
         ctx.save();
         ctx.translate(cx, cy);
         ctx.rotate(midA);
@@ -346,11 +480,11 @@
         ctx.shadowColor  = 'rgba(0,0,0,0.5)';
         ctx.shadowBlur   = 4;
         const maxR = r - 14;
-        let txt = labels[i];
+        let txt = lbls[i];
         while (ctx.measureText(txt).width > maxR * 0.72 && txt.length > 1) {
           txt = txt.slice(0, -1);
         }
-        if (txt !== labels[i]) txt = txt.slice(0, -1) + '…';
+        if (txt !== lbls[i]) txt = txt.slice(0, -1) + '…';
         ctx.fillText(txt, r - 12, 0);
         ctx.restore();
       }
@@ -369,12 +503,54 @@
     }
 
     function getWinnerIndex() {
-      const sliceAngle   = (2 * Math.PI) / NUM_SEGMENTS;
+      const sliceAngle   = (2 * Math.PI) / numSegments;
       const norm         = ((currentAngle % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
       const pointerAngle = 3 * Math.PI / 2;
       const offset       = ((pointerAngle - norm) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI);
-      return Math.floor(offset / sliceAngle) % NUM_SEGMENTS;
+      return Math.floor(offset / sliceAngle) % numSegments;
     }
+
+    function buildEditor() {
+      segListEl.innerHTML = '';
+      for (let i = 0; i < numSegments; i++) {
+        const row = document.createElement('div');
+        row.className = 'seg-row';
+
+        const swatch = document.createElement('div');
+        swatch.className = 'seg-swatch';
+        swatch.style.background = PALETTE[i % PALETTE.length];
+
+        const inp = document.createElement('input');
+        inp.type      = 'text';
+        inp.value     = savedLabels[i];
+        inp.maxLength = 28;
+        inp.setAttribute('aria-label', `Segment ${i + 1}`);
+        const idx = i;
+        inp.addEventListener('input', () => {
+          savedLabels[idx] = inp.value || `Feld ${idx + 1}`;
+          drawWheel();
+        });
+
+        row.appendChild(swatch);
+        row.appendChild(inp);
+        segListEl.appendChild(row);
+      }
+
+      countDisp.textContent = numSegments;
+      decBtn.disabled = numSegments <= MIN_SEG;
+      incBtn.disabled = numSegments >= MAX_SEG;
+    }
+
+    function setCount(n) {
+      numSegments    = Math.max(MIN_SEG, Math.min(MAX_SEG, n));
+      highlightIndex = -1;
+      resultBox.classList.remove('visible');
+      buildEditor();
+      drawWheel();
+    }
+
+    decBtn.addEventListener('click', () => setCount(numSegments - 1));
+    incBtn.addEventListener('click', () => setCount(numSegments + 1));
 
     function spin(onDone) {
       if (spinning) return;
@@ -402,39 +578,13 @@
           spinning       = false;
           highlightIndex = getWinnerIndex();
           drawWheel();
-          resultBox.textContent = `🎉 ${labels[highlightIndex]}`;
+          resultBox.textContent = `🎉 ${activeLabels()[highlightIndex]}`;
           resultBox.classList.add('visible');
           if (onDone) onDone();
         }
       }
 
       requestAnimationFrame(frame);
-    }
-
-    function buildEditor() {
-      segListEl.innerHTML = '';
-      labels.forEach((lbl, i) => {
-        const row    = document.createElement('div');
-        row.className = 'seg-row';
-
-        const swatch = document.createElement('div');
-        swatch.className = 'seg-swatch';
-        swatch.style.background = PALETTE[i % PALETTE.length];
-
-        const inp = document.createElement('input');
-        inp.type      = 'text';
-        inp.value     = lbl;
-        inp.maxLength = 28;
-        inp.setAttribute('aria-label', `Segment ${i + 1}`);
-        inp.addEventListener('input', () => {
-          labels[i] = inp.value || defaultLabels[i];
-          drawWheel();
-        });
-
-        row.appendChild(swatch);
-        row.appendChild(inp);
-        segListEl.appendChild(row);
-      });
     }
 
     function resize() {
@@ -456,23 +606,24 @@
     };
   }
 
-  // ─── Räder erzeugen (unterschiedliche Physik) ────────────────────────────
-  //
-  // Rad 1 — kubisches Ease-out, moderate Geschwindigkeit, 5–9 Umdrehungen
+  // ─── Räder erzeugen ───────────────────────────────────────────────────────
   const wheel1 = createWheel(
     'wheel-1', 'pointer-wrap-1', 'segments-list-1', 'result-box-1',
+    'count-display-1', 'dec-1', 'inc-1',
     easingCubic,
-    { minDur: 4, durRange: 3, minSpins: 5, spinRange: 5 }
+    { minDur: 4, durRange: 3, minSpins: 5, spinRange: 5 },
+    15
   );
 
-  // Rad 2 — exponentielles Decay, dreht kürzer/länger, 4–11 Umdrehungen
   const wheel2 = createWheel(
     'wheel-2', 'pointer-wrap-2', 'segments-list-2', 'result-box-2',
+    'count-display-2', 'dec-2', 'inc-2',
     easingExpoDecay,
-    { minDur: 3.5, durRange: 4, minSpins: 4, spinRange: 8 }
+    { minDur: 3.5, durRange: 4, minSpins: 4, spinRange: 8 },
+    15
   );
 
-  // ─── Spin-Button ─────────────────────────────────────────────────────────
+  // ─── Spin-Button ──────────────────────────────────────────────────────────
   const spinBtn = document.getElementById('spin-btn');
 
   spinBtn.addEventListener('click', () => {
@@ -484,7 +635,7 @@
       done++;
       if (done === 2) {
         spinBtn.disabled = false;
-        launchConfetti();
+        if (confettiOn) launchConfetti();
       }
     }
 
@@ -511,7 +662,7 @@
     }
   }
 
-  // ─── Responsive Resize ───────────────────────────────────────────────────
+  // ─── Responsive Resize ────────────────────────────────────────────────────
   let resizeTimer;
   window.addEventListener('resize', () => {
     clearTimeout(resizeTimer);
