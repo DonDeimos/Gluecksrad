@@ -22,23 +22,45 @@
     font-size: clamp(1.6rem, 5vw, 2.4rem);
     font-weight: 800;
     letter-spacing: -0.02em;
-    margin-bottom: 8px;
+    margin-bottom: 20px;
     background: linear-gradient(135deg, #6c3de5, #e5523d);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
 
-  .wheel-container {
-    position: relative;
+  .wheels-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 36px;
+    justify-content: center;
+    width: 100%;
+    max-width: 1100px;
+  }
+
+  .wheel-section {
     display: flex;
     flex-direction: column;
     align-items: center;
-    margin-top: 12px;
+    flex: 1 1 320px;
+    max-width: 500px;
+  }
+
+  .wheel-title {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #444;
+    margin-bottom: 8px;
+    letter-spacing: 0.02em;
+  }
+
+  .wheel-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
   }
 
   .pointer-wrap {
-    position: relative;
     width: 100%;
     display: flex;
     justify-content: center;
@@ -47,19 +69,37 @@
     margin-bottom: -2px;
   }
 
-  .pointer-wrap svg {
-    display: block;
-  }
-
   canvas {
     display: block;
     border-radius: 50%;
     box-shadow: 0 8px 40px rgba(0,0,0,0.18);
   }
 
+  .result-box {
+    margin-top: 16px;
+    padding: 14px 24px;
+    background: linear-gradient(135deg, #f9f5ff, #fff5f3);
+    border: 2px solid #e0d4fc;
+    border-radius: 16px;
+    font-size: clamp(1rem, 2.5vw, 1.4rem);
+    font-weight: 800;
+    text-align: center;
+    width: 100%;
+    opacity: 0;
+    transform: scale(0.85) translateY(10px);
+    transition: opacity 0.4s ease, transform 0.4s ease;
+    will-change: transform, opacity;
+    min-height: 54px;
+  }
+
+  .result-box.visible {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+
   #spin-btn {
-    margin-top: 24px;
-    padding: 14px 48px;
+    margin: 28px 0 8px;
+    padding: 14px 52px;
     font-size: 1.2rem;
     font-weight: 700;
     font-family: inherit;
@@ -78,77 +118,50 @@
     box-shadow: 0 8px 24px rgba(108,61,229,0.45);
   }
 
-  #spin-btn:active:not(:disabled) {
-    transform: translateY(0);
-  }
+  #spin-btn:active:not(:disabled) { transform: translateY(0); }
 
   #spin-btn:disabled {
     opacity: 0.5;
     cursor: not-allowed;
   }
 
-  #result-box {
-    margin-top: 24px;
-    padding: 18px 36px;
-    background: linear-gradient(135deg, #f9f5ff, #fff5f3);
-    border: 2px solid #e0d4fc;
-    border-radius: 16px;
-    font-size: clamp(1.2rem, 4vw, 1.7rem);
-    font-weight: 800;
-    text-align: center;
-    min-width: 260px;
-    opacity: 0;
-    transform: scale(0.85) translateY(10px);
-    transition: opacity 0.4s ease, transform 0.4s ease;
-    will-change: transform, opacity;
-  }
-
-  #result-box.visible {
-    opacity: 1;
-    transform: scale(1) translateY(0);
-  }
-
-  /* SEGMENT EDITOR */
   .editor-section {
-    margin-top: 36px;
+    margin-top: 22px;
     width: 100%;
-    max-width: 600px;
   }
 
   .editor-section h2 {
-    font-size: 1.05rem;
+    font-size: 0.88rem;
     font-weight: 700;
-    color: #555;
-    letter-spacing: 0.04em;
+    color: #777;
+    letter-spacing: 0.06em;
     text-transform: uppercase;
-    margin-bottom: 12px;
+    margin-bottom: 10px;
   }
 
   .segments-list {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
-    gap: 10px;
+    grid-template-columns: repeat(auto-fill, minmax(145px, 1fr));
+    gap: 8px;
   }
 
   .seg-row {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 7px;
     background: #fafafa;
     border: 1.5px solid #e8e8e8;
     border-radius: 10px;
-    padding: 8px 10px;
+    padding: 7px 10px;
     transition: border-color 0.15s;
   }
 
-  .seg-row:focus-within {
-    border-color: #a07af5;
-  }
+  .seg-row:focus-within { border-color: #a07af5; }
 
   .seg-swatch {
-    width: 16px;
-    height: 16px;
-    border-radius: 4px;
+    width: 13px;
+    height: 13px;
+    border-radius: 3px;
     flex-shrink: 0;
   }
 
@@ -157,7 +170,7 @@
     border: none;
     background: transparent;
     font-family: inherit;
-    font-size: 0.88rem;
+    font-size: 0.82rem;
     color: #1a1a2e;
     outline: none;
     min-width: 0;
@@ -166,8 +179,6 @@
   /* CONFETTI */
   .confetti-piece {
     position: fixed;
-    width: 10px;
-    height: 10px;
     top: -10px;
     border-radius: 2px;
     pointer-events: none;
@@ -181,8 +192,9 @@
     100% { transform: translateY(110vh) rotate(720deg); opacity: 0; }
   }
 
-  @media (max-width: 600px) {
-    body { padding: 16px 12px 36px; }
+  @media (max-width: 680px) {
+    body { padding: 16px 10px 36px; }
+    .wheels-row { gap: 24px; }
   }
 </style>
 </head>
@@ -190,285 +202,324 @@
 
 <h1>🎡 Glücksrad</h1>
 
-<div class="wheel-container">
-  <div class="pointer-wrap" id="pointer-wrap">
-    <!-- pointer SVG injected by JS -->
+<div class="wheels-row">
+  <div class="wheel-section">
+    <div class="wheel-title">Rad 1</div>
+    <div class="wheel-container">
+      <div class="pointer-wrap" id="pointer-wrap-1"></div>
+      <canvas id="wheel-1"></canvas>
+    </div>
+    <div class="result-box" id="result-box-1"></div>
+    <section class="editor-section">
+      <h2>Felder bearbeiten</h2>
+      <div class="segments-list" id="segments-list-1"></div>
+    </section>
   </div>
-  <canvas id="wheel"></canvas>
+
+  <div class="wheel-section">
+    <div class="wheel-title">Rad 2</div>
+    <div class="wheel-container">
+      <div class="pointer-wrap" id="pointer-wrap-2"></div>
+      <canvas id="wheel-2"></canvas>
+    </div>
+    <div class="result-box" id="result-box-2"></div>
+    <section class="editor-section">
+      <h2>Felder bearbeiten</h2>
+      <div class="segments-list" id="segments-list-2"></div>
+    </section>
+  </div>
 </div>
 
 <button id="spin-btn">Drehen</button>
 
-<div id="result-box"></div>
-
-<section class="editor-section">
-  <h2>Felder bearbeiten</h2>
-  <div class="segments-list" id="segments-list"></div>
-</section>
-
 <script>
 (() => {
-  // ─── CONFIG ───────────────────────────────────────────────────────────────
   const NUM_SEGMENTS = 15;
+
   const PALETTE = [
     '#e63946','#f4a261','#2a9d8f','#457b9d','#e9c46a',
     '#6a4c93','#06d6a0','#ef476f','#118ab2','#ffd166',
     '#7b2d8b','#52b788','#f77f00','#4361ee','#b5179e'
   ];
 
-  const defaultLabels = Array.from({length: NUM_SEGMENTS}, (_, i) => `Feld ${i + 1}`);
-  let labels = [...defaultLabels];
-
-  // ─── CANVAS SETUP ─────────────────────────────────────────────────────────
-  const canvas = document.getElementById('wheel');
-  const ctx    = canvas.getContext('2d');
-  let size     = 500;
-
-  function computeSize() {
-    const maxW = Math.min(window.innerWidth - 32, 600);
-    size = Math.max(280, Math.min(500, maxW));
-    canvas.width  = size;
-    canvas.height = size;
-  }
-
-  // ─── POINTER ──────────────────────────────────────────────────────────────
-  function buildPointer() {
-    const wrap = document.getElementById('pointer-wrap');
-    const ph   = Math.round(size * 0.08);
-    const pw   = Math.round(size * 0.07);
-    wrap.innerHTML = `<svg width="${pw}" height="${ph}" viewBox="0 0 ${pw} ${ph}" xmlns="http://www.w3.org/2000/svg">
-      <polygon points="${pw/2},${ph} 0,0 ${pw},0"
-        fill="#ff2d55" stroke="#fff" stroke-width="2" stroke-linejoin="round"/>
-    </svg>`;
-  }
-
-  // ─── DRAW WHEEL ───────────────────────────────────────────────────────────
-  let currentAngle    = 0;   // radians, current rotation of the wheel
-  let highlightIndex  = -1;  // winning segment index
-
-  function drawWheel() {
-    const cx = size / 2, cy = size / 2, r = size / 2 - 4;
-    const sliceAngle = (2 * Math.PI) / NUM_SEGMENTS;
-    const fontSize   = Math.max(10, Math.round(size * 0.036));
-
-    ctx.clearRect(0, 0, size, size);
-
-    for (let i = 0; i < NUM_SEGMENTS; i++) {
-      const startA = currentAngle + i * sliceAngle;
-      const endA   = startA + sliceAngle;
-      const midA   = startA + sliceAngle / 2;
-
-      // fill
-      ctx.beginPath();
-      ctx.moveTo(cx, cy);
-      ctx.arc(cx, cy, r, startA, endA);
-      ctx.closePath();
-      ctx.fillStyle = PALETTE[i % PALETTE.length];
-      ctx.fill();
-
-      // highlight winner
-      if (i === highlightIndex) {
-        ctx.strokeStyle = 'rgba(255,255,255,0.95)';
-        ctx.lineWidth   = Math.max(3, size * 0.012);
-        ctx.stroke();
-
-        // glow
-        ctx.save();
-        ctx.shadowColor = '#fff';
-        ctx.shadowBlur  = 18;
-        ctx.stroke();
-        ctx.restore();
-      }
-
-      // separator
-      ctx.beginPath();
-      ctx.moveTo(cx, cy);
-      ctx.arc(cx, cy, r, startA, endA);
-      ctx.closePath();
-      ctx.strokeStyle = 'rgba(0,0,0,0.15)';
-      ctx.lineWidth   = 1;
-      ctx.stroke();
-
-      // text
-      ctx.save();
-      ctx.translate(cx, cy);
-      ctx.rotate(midA);
-      ctx.textAlign    = 'right';
-      ctx.textBaseline = 'middle';
-      ctx.fillStyle    = '#fff';
-      ctx.font         = `bold ${fontSize}px system-ui, sans-serif`;
-      ctx.shadowColor  = 'rgba(0,0,0,0.5)';
-      ctx.shadowBlur   = 4;
-      const maxTextR   = r - 14;
-      const label      = labels[i];
-      // truncate if too long
-      let txt = label;
-      ctx.font = `bold ${fontSize}px system-ui, sans-serif`;
-      while (ctx.measureText(txt).width > maxTextR * 0.72 && txt.length > 1) {
-        txt = txt.slice(0, -1);
-      }
-      if (txt !== label) txt = txt.slice(0, -1) + '…';
-      ctx.fillText(txt, r - 12, 0);
-      ctx.restore();
-    }
-
-    // center hub
-    ctx.beginPath();
-    ctx.arc(cx, cy, size * 0.045, 0, 2 * Math.PI);
-    ctx.fillStyle = '#fff';
-    ctx.shadowColor = 'rgba(0,0,0,0.25)';
-    ctx.shadowBlur  = 8;
-    ctx.fill();
-    ctx.shadowBlur  = 0;
-    ctx.strokeStyle = '#ddd';
-    ctx.lineWidth   = 2;
-    ctx.stroke();
-  }
-
-  // ─── WINNING SEGMENT DETECTION ────────────────────────────────────────────
-  // pointer points at the top (angle = -π/2 in canvas coords = 270°)
-  function getWinnerIndex() {
-    const sliceAngle  = (2 * Math.PI) / NUM_SEGMENTS;
-    // normalise currentAngle into [0, 2π)
-    const norm = ((currentAngle % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
-    // the pointer is at the top → canvas angle -π/2 (= 3π/2)
-    // which segment sits under the top pointer?
-    const pointerAngle = 3 * Math.PI / 2; // top of canvas
-    // offset from wheel rotation
-    let offset = ((pointerAngle - norm) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI);
-    return Math.floor(offset / sliceAngle) % NUM_SEGMENTS;
-  }
-
-  // ─── SPIN ANIMATION ───────────────────────────────────────────────────────
-  let spinning = false;
-  const spinBtn = document.getElementById('spin-btn');
-
-  spinBtn.addEventListener('click', startSpin);
-
-  function startSpin() {
-    if (spinning) return;
-    spinning = true;
-    highlightIndex = -1;
-    document.getElementById('result-box').classList.remove('visible');
-    spinBtn.disabled = true;
-
-    const duration    = (4 + Math.random() * 3) * 1000;  // 4–7s
-    const extraSpins  = 5 + Math.floor(Math.random() * 5); // 5–9 full rotations
-    const randomExtra = Math.random() * 2 * Math.PI;
-    const totalDelta  = extraSpins * 2 * Math.PI + randomExtra;
-
-    const startAngle = currentAngle;
-    const startTime  = performance.now();
-
-    function easeOut(t) {
-      // cubic ease-out
-      return 1 - Math.pow(1 - t, 3);
-    }
-
-    function frame(now) {
-      const elapsed = now - startTime;
-      const t       = Math.min(elapsed / duration, 1);
-      currentAngle  = startAngle + totalDelta * easeOut(t);
-      drawWheel();
-
-      if (t < 1) {
-        requestAnimationFrame(frame);
-      } else {
-        currentAngle = startAngle + totalDelta;
-        spinning     = false;
-        spinBtn.disabled = false;
-        highlightIndex   = getWinnerIndex();
-        drawWheel();
-        showResult(highlightIndex);
-      }
-    }
-
-    requestAnimationFrame(frame);
-  }
-
-  // ─── RESULT ───────────────────────────────────────────────────────────────
-  function showResult(idx) {
-    const box   = document.getElementById('result-box');
-    box.textContent = `🎉 ${labels[idx]}`;
-    box.classList.add('visible');
-    launchConfetti();
-  }
-
-  // ─── CONFETTI ─────────────────────────────────────────────────────────────
   const CONFETTI_COLORS = [
     '#e63946','#f4a261','#2a9d8f','#e9c46a','#6a4c93',
     '#06d6a0','#ef476f','#118ab2','#ffd166','#b5179e'
   ];
 
+  // ─── Easing functions ────────────────────────────────────────────────────
+  // Rad 1: sanftes kubisches Abbremsen — gleichmäßig und weich
+  function easingCubic(t) {
+    return 1 - Math.pow(1 - t, 3);
+  }
+
+  // Rad 2: dreht erst schnell, bremst dann scharf — anderes Gefühl
+  function easingExpoDecay(t) {
+    // Exponentielles Abbremsen: dreht lange schnell, stoppt dann abrupt
+    return 1 - Math.pow(2, -10 * t);
+  }
+
+  // ─── Wheel factory ───────────────────────────────────────────────────────
+  function createWheel(canvasId, pointerWrapId, segListId, resultBoxId, easingFn, spinRanges) {
+    const canvas     = document.getElementById(canvasId);
+    const ctx        = canvas.getContext('2d');
+    const ptrWrap    = document.getElementById(pointerWrapId);
+    const segListEl  = document.getElementById(segListId);
+    const resultBox  = document.getElementById(resultBoxId);
+
+    const defaultLabels = Array.from({length: NUM_SEGMENTS}, (_, i) => `Feld ${i + 1}`);
+    let labels         = [...defaultLabels];
+    let size           = 400;
+    let currentAngle   = 0;
+    let highlightIndex = -1;
+    let spinning       = false;
+
+    function computeSize() {
+      const vw = window.innerWidth;
+      const available = vw < 720
+        ? Math.min(vw - 28, 500)                 // mobil: volle Breite
+        : Math.min((vw - 100) / 2, 460);         // desktop: halbe Breite
+      size = Math.max(240, available);
+      canvas.width  = size;
+      canvas.height = size;
+    }
+
+    function buildPointer() {
+      const ph = Math.round(size * 0.08);
+      const pw = Math.round(size * 0.07);
+      ptrWrap.innerHTML =
+        `<svg width="${pw}" height="${ph}" viewBox="0 0 ${pw} ${ph}" xmlns="http://www.w3.org/2000/svg">
+          <polygon points="${pw/2},${ph} 0,0 ${pw},0"
+            fill="#ff2d55" stroke="#fff" stroke-width="2" stroke-linejoin="round"/>
+        </svg>`;
+    }
+
+    function drawWheel() {
+      const cx = size / 2, cy = size / 2, r = size / 2 - 4;
+      const sliceAngle = (2 * Math.PI) / NUM_SEGMENTS;
+      const fontSize   = Math.max(9, Math.round(size * 0.034));
+
+      ctx.clearRect(0, 0, size, size);
+
+      for (let i = 0; i < NUM_SEGMENTS; i++) {
+        const startA = currentAngle + i * sliceAngle;
+        const endA   = startA + sliceAngle;
+        const midA   = startA + sliceAngle / 2;
+
+        // Segmentfläche
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.arc(cx, cy, r, startA, endA);
+        ctx.closePath();
+        ctx.fillStyle = PALETTE[i % PALETTE.length];
+        ctx.fill();
+
+        // Gewinner hervorheben
+        if (i === highlightIndex) {
+          ctx.strokeStyle = 'rgba(255,255,255,0.95)';
+          ctx.lineWidth   = Math.max(3, size * 0.012);
+          ctx.stroke();
+          ctx.save();
+          ctx.shadowColor = '#fff';
+          ctx.shadowBlur  = 18;
+          ctx.stroke();
+          ctx.restore();
+        }
+
+        // Trennlinie
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.arc(cx, cy, r, startA, endA);
+        ctx.closePath();
+        ctx.strokeStyle = 'rgba(0,0,0,0.15)';
+        ctx.lineWidth   = 1;
+        ctx.stroke();
+
+        // Text
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.rotate(midA);
+        ctx.textAlign    = 'right';
+        ctx.textBaseline = 'middle';
+        ctx.fillStyle    = '#fff';
+        ctx.font         = `bold ${fontSize}px system-ui, sans-serif`;
+        ctx.shadowColor  = 'rgba(0,0,0,0.5)';
+        ctx.shadowBlur   = 4;
+        const maxR = r - 14;
+        let txt = labels[i];
+        while (ctx.measureText(txt).width > maxR * 0.72 && txt.length > 1) {
+          txt = txt.slice(0, -1);
+        }
+        if (txt !== labels[i]) txt = txt.slice(0, -1) + '…';
+        ctx.fillText(txt, r - 12, 0);
+        ctx.restore();
+      }
+
+      // Mittelnabe
+      ctx.beginPath();
+      ctx.arc(cx, cy, size * 0.045, 0, 2 * Math.PI);
+      ctx.fillStyle   = '#fff';
+      ctx.shadowColor = 'rgba(0,0,0,0.25)';
+      ctx.shadowBlur  = 8;
+      ctx.fill();
+      ctx.shadowBlur  = 0;
+      ctx.strokeStyle = '#ddd';
+      ctx.lineWidth   = 2;
+      ctx.stroke();
+    }
+
+    function getWinnerIndex() {
+      const sliceAngle   = (2 * Math.PI) / NUM_SEGMENTS;
+      const norm         = ((currentAngle % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI);
+      const pointerAngle = 3 * Math.PI / 2;
+      const offset       = ((pointerAngle - norm) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI);
+      return Math.floor(offset / sliceAngle) % NUM_SEGMENTS;
+    }
+
+    function spin(onDone) {
+      if (spinning) return;
+      spinning = true;
+      highlightIndex = -1;
+      resultBox.classList.remove('visible');
+
+      const duration   = (spinRanges.minDur + Math.random() * spinRanges.durRange) * 1000;
+      const extraSpins = spinRanges.minSpins + Math.floor(Math.random() * spinRanges.spinRange);
+      const totalDelta = extraSpins * 2 * Math.PI + Math.random() * 2 * Math.PI;
+
+      const startAngle = currentAngle;
+      const startTime  = performance.now();
+
+      function frame(now) {
+        const elapsed = now - startTime;
+        const t       = Math.min(elapsed / duration, 1);
+        currentAngle  = startAngle + totalDelta * easingFn(t);
+        drawWheel();
+
+        if (t < 1) {
+          requestAnimationFrame(frame);
+        } else {
+          currentAngle   = startAngle + totalDelta;
+          spinning       = false;
+          highlightIndex = getWinnerIndex();
+          drawWheel();
+          resultBox.textContent = `🎉 ${labels[highlightIndex]}`;
+          resultBox.classList.add('visible');
+          if (onDone) onDone();
+        }
+      }
+
+      requestAnimationFrame(frame);
+    }
+
+    function buildEditor() {
+      segListEl.innerHTML = '';
+      labels.forEach((lbl, i) => {
+        const row    = document.createElement('div');
+        row.className = 'seg-row';
+
+        const swatch = document.createElement('div');
+        swatch.className = 'seg-swatch';
+        swatch.style.background = PALETTE[i % PALETTE.length];
+
+        const inp = document.createElement('input');
+        inp.type      = 'text';
+        inp.value     = lbl;
+        inp.maxLength = 28;
+        inp.setAttribute('aria-label', `Segment ${i + 1}`);
+        inp.addEventListener('input', () => {
+          labels[i] = inp.value || defaultLabels[i];
+          drawWheel();
+        });
+
+        row.appendChild(swatch);
+        row.appendChild(inp);
+        segListEl.appendChild(row);
+      });
+    }
+
+    function resize() {
+      computeSize();
+      buildPointer();
+      drawWheel();
+    }
+
+    // Init
+    computeSize();
+    buildPointer();
+    drawWheel();
+    buildEditor();
+
+    return {
+      spin,
+      resize,
+      isSpinning: () => spinning
+    };
+  }
+
+  // ─── Räder erzeugen (unterschiedliche Physik) ────────────────────────────
+  //
+  // Rad 1 — kubisches Ease-out, moderate Geschwindigkeit, 5–9 Umdrehungen
+  const wheel1 = createWheel(
+    'wheel-1', 'pointer-wrap-1', 'segments-list-1', 'result-box-1',
+    easingCubic,
+    { minDur: 4, durRange: 3, minSpins: 5, spinRange: 5 }
+  );
+
+  // Rad 2 — exponentielles Decay, dreht kürzer/länger, 4–11 Umdrehungen
+  const wheel2 = createWheel(
+    'wheel-2', 'pointer-wrap-2', 'segments-list-2', 'result-box-2',
+    easingExpoDecay,
+    { minDur: 3.5, durRange: 4, minSpins: 4, spinRange: 8 }
+  );
+
+  // ─── Spin-Button ─────────────────────────────────────────────────────────
+  const spinBtn = document.getElementById('spin-btn');
+
+  spinBtn.addEventListener('click', () => {
+    if (wheel1.isSpinning() || wheel2.isSpinning()) return;
+    spinBtn.disabled = true;
+
+    let done = 0;
+    function onDone() {
+      done++;
+      if (done === 2) {
+        spinBtn.disabled = false;
+        launchConfetti();
+      }
+    }
+
+    wheel1.spin(onDone);
+    wheel2.spin(onDone);
+  });
+
+  // ─── Confetti ─────────────────────────────────────────────────────────────
   function launchConfetti() {
-    const count = 120;
-    for (let i = 0; i < count; i++) {
+    for (let i = 0; i < 140; i++) {
       const el = document.createElement('div');
       el.className = 'confetti-piece';
-      const size   = 6 + Math.random() * 8;
-      const left   = Math.random() * 100;
-      const delay  = Math.random() * 0.8;
-      const dur    = 1.8 + Math.random() * 1.6;
-      const color  = CONFETTI_COLORS[Math.floor(Math.random() * CONFETTI_COLORS.length)];
-      const shape  = Math.random() > 0.5 ? '50%' : '2px';
-
+      const s = 6 + Math.random() * 8;
       el.style.cssText = `
-        width:${size}px; height:${size}px;
-        left:${left}vw;
-        background:${color};
-        border-radius:${shape};
-        animation-duration:${dur}s;
-        animation-delay:${delay}s;
+        width:${s}px; height:${s}px;
+        left:${Math.random() * 100}vw;
+        background:${CONFETTI_COLORS[Math.floor(Math.random() * CONFETTI_COLORS.length)]};
+        border-radius:${Math.random() > 0.5 ? '50%' : '2px'};
+        animation-duration:${1.8 + Math.random() * 1.6}s;
+        animation-delay:${Math.random() * 0.8}s;
       `;
       document.body.appendChild(el);
       el.addEventListener('animationend', () => el.remove());
     }
   }
 
-  // ─── SEGMENT EDITOR ───────────────────────────────────────────────────────
-  function buildEditor() {
-    const list = document.getElementById('segments-list');
-    list.innerHTML = '';
-    labels.forEach((lbl, i) => {
-      const row   = document.createElement('div');
-      row.className = 'seg-row';
-
-      const swatch = document.createElement('div');
-      swatch.className  = 'seg-swatch';
-      swatch.style.background = PALETTE[i % PALETTE.length];
-
-      const inp = document.createElement('input');
-      inp.type        = 'text';
-      inp.value       = lbl;
-      inp.maxLength   = 28;
-      inp.setAttribute('aria-label', `Segment ${i + 1}`);
-      inp.addEventListener('input', () => {
-        labels[i] = inp.value || defaultLabels[i];
-        drawWheel();
-      });
-
-      row.appendChild(swatch);
-      row.appendChild(inp);
-      list.appendChild(row);
-    });
-  }
-
-  // ─── RESPONSIVE RESIZE ────────────────────────────────────────────────────
+  // ─── Responsive Resize ───────────────────────────────────────────────────
   let resizeTimer;
   window.addEventListener('resize', () => {
     clearTimeout(resizeTimer);
     resizeTimer = setTimeout(() => {
-      computeSize();
-      buildPointer();
-      drawWheel();
+      wheel1.resize();
+      wheel2.resize();
     }, 80);
   });
-
-  // ─── INIT ─────────────────────────────────────────────────────────────────
-  computeSize();
-  buildPointer();
-  drawWheel();
-  buildEditor();
 
 })();
 </script>
