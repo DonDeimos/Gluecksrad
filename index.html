@@ -365,12 +365,17 @@
   ];
 
   // ─── Konfetti-Toggle ──────────────────────────────────────────────────────
-  let confettiOn = true;
+  let confettiOn = localStorage.getItem('confettiOn') !== 'false';
   const confettiBtn = document.getElementById('confetti-btn');
-  confettiBtn.addEventListener('click', () => {
-    confettiOn = !confettiOn;
+  function updateConfettiBtn() {
     confettiBtn.textContent = confettiOn ? '🎊 Konfetti: AN' : '🎊 Konfetti: AUS';
     confettiBtn.className   = confettiOn ? 'on' : 'off';
+  }
+  updateConfettiBtn();
+  confettiBtn.addEventListener('click', () => {
+    confettiOn = !confettiOn;
+    localStorage.setItem('confettiOn', confettiOn);
+    updateConfettiBtn();
   });
 
   // ─── Easing functions ─────────────────────────────────────────────────────
@@ -398,9 +403,18 @@
     const decBtn      = document.getElementById(decBtnId);
     const incBtn      = document.getElementById(incBtnId);
 
-    let numSegments    = initialCount;
+    const storageKey   = `wheel_${canvasId}`;
+    function loadState() {
+      try { return JSON.parse(localStorage.getItem(storageKey)) || {}; } catch { return {}; }
+    }
+    function saveState() {
+      localStorage.setItem(storageKey, JSON.stringify({ numSegments, savedLabels }));
+    }
+
+    const saved        = loadState();
+    let numSegments    = saved.numSegments || initialCount;
     // savedLabels stores all entered text, growing as needed
-    let savedLabels    = Array.from({length: MAX_SEG}, (_, i) => `Feld ${i + 1}`);
+    let savedLabels    = saved.savedLabels || Array.from({length: MAX_SEG}, (_, i) => `Feld ${i + 1}`);
     let size           = 400;
     let currentAngle   = 0;
     let highlightIndex = -1;
@@ -528,6 +542,7 @@
         const idx = i;
         inp.addEventListener('input', () => {
           savedLabels[idx] = inp.value || `Feld ${idx + 1}`;
+          saveState();
           drawWheel();
         });
 
@@ -545,6 +560,7 @@
       numSegments    = Math.max(MIN_SEG, Math.min(MAX_SEG, n));
       highlightIndex = -1;
       resultBox.classList.remove('visible');
+      saveState();
       buildEditor();
       drawWheel();
     }
